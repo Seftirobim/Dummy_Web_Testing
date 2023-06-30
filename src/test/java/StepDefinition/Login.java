@@ -1,31 +1,47 @@
 package StepDefinition;
 
+import io.cucumber.java.After;
+import io.cucumber.java.Before;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.junit.Assert;
 import org.openqa.selenium.By;
+import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.FluentWait;
 
+import java.time.Duration;
+
 public class Login {
     WebDriver chromeDriver;
-
-    @Given("User open url")
-    public void openUrl() {
+    FluentWait wait;
+    final String url = "https://www.saucedemo.com";
+    @Before
+    public void browserSetup(){
         System.setProperty("webdriver.chrome.driver", "Webdriver\\chromedriver.exe");
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--remote-allow-origins=*");
-
         chromeDriver = new ChromeDriver(options);
-        String url = "https://www.saucedemo.com";
-        //WebDriverManager.chromedriver().setup();
+        wait = new FluentWait(chromeDriver)
+                .withTimeout(Duration.ofSeconds(10))
+                .pollingEvery(Duration.ofSeconds(5));
+    }
 
-        chromeDriver.get(url);
+//    @After
+//    public void tearDown(){
+//        chromeDriver.close();
+//        chromeDriver.quit();
+//    }
+    @Given("User open url")
+    public void openUrl() {
+
+        //WebDriverManager.chromedriver().setup();
+        chromeDriver.get(this.url);
     }
 
     @When("User input valid username {string} and valid password {string}")
@@ -65,7 +81,7 @@ public class Login {
 
     @And("The product image must be displayed and be appropriate")
     public void theProductImageMustBeAppropriate() {
-        FluentWait wait = new FluentWait(chromeDriver);
+
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("add-to-cart-sauce-labs-backpack")));
 
         boolean display = chromeDriver.findElement(By.xpath("//img[@src='/static/media/sauce-backpack-1200x1500.0a0b85a3.jpg']")).isDisplayed();
@@ -76,12 +92,11 @@ public class Login {
     @When("User click add to cart button")
     public void userClickAddToCartButton() {
 
-        FluentWait wait = new FluentWait(chromeDriver);
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("add-to-cart-sauce-labs-backpack")));
         chromeDriver.findElement(By.name("add-to-cart-sauce-labs-backpack")).click();
     }
 
-    @Then("button remove and cart icon badge should displayed")
+    @Then("Button remove and cart icon badge should displayed")
     public void buttonRemoveAndCartIconBadgeShouldDisplayed() {
         Assert.assertTrue(chromeDriver.findElement(By.xpath("//button[@name='remove-sauce-labs-backpack']")).isDisplayed());
         Assert.assertTrue(chromeDriver.findElement(By.xpath("//span[@class='shopping_cart_badge']")).isDisplayed());
@@ -93,8 +108,8 @@ public class Login {
         chromeDriver.findElement(By.xpath("//a[@class='shopping_cart_link']")).click();
     }
 
-    @Then("The Product must be displayed")
-    public void theProductMustBeDisplayed() {
+    @Then("Selected Product must be displayed")
+    public void selectedProductMustBeDisplayed() {
         boolean productDisplay = chromeDriver.findElement(By.id("item_4_title_link")).isDisplayed();
         Assert.assertTrue(productDisplay);
     }
@@ -142,4 +157,35 @@ public class Login {
     }
 
 
+    @When("User clicks on the remove button")
+    public void userClicksOnTheRemoveButton() {
+        chromeDriver.findElement(By.xpath("//button[@name='remove-sauce-labs-backpack']")).click();
+    }
+//Check cart badge is visible or not
+    public boolean checkVisibilityBadge(){
+        try{
+            boolean badgeVisibility = chromeDriver.findElement(By.xpath("//span[@class='shopping_cart_badge']")).isDisplayed();
+            return true;
+        } catch (NoSuchElementException e){
+            return false;
+        }
+    }
+    @Then("Add to cart button should be displayed and cart icon badge should be removed")
+    public void addToCartButtonShouldBeDisplayedAndCartIconBadgeShouldBeRemoved() {
+        boolean add2Cart = chromeDriver.findElement(By.xpath("//button[@id='add-to-cart-sauce-labs-backpack']")).isDisplayed();
+        //boolean badgeVisibility = chromeDriver.findElement(By.xpath("//span[@class='shopping_cart_badge']")).isDisplayed();
+
+        Assert.assertTrue(add2Cart);
+        Assert.assertFalse(checkVisibilityBadge());
+    }
+
+    @When("User click on remove button")
+    public void userClickOnRemoveButton() {
+        chromeDriver.findElement(By.name("remove-sauce-labs-backpack")).click();
+    }
+
+    @Then("System should remove the item")
+    public void systemShouldRemoveTheItem() {
+        Assert.assertTrue(chromeDriver.findElement(By.xpath("//div[@class='removed_cart_item']")).isEnabled());
+    }
 }
