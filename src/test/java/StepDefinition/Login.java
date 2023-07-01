@@ -6,6 +6,7 @@ import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import io.cucumber.java.mk_latn.No;
 import org.junit.Assert;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
@@ -15,28 +16,35 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.FluentWait;
 
+
 import java.time.Duration;
 
 public class Login {
     WebDriver chromeDriver;
     FluentWait wait;
     final String url = "https://www.saucedemo.com";
+
+//    Method awal yang dipanggil menggunakan @Before dari io.cucumber.java.
+//    Kata kunci : Hook selenium java
     @Before
     public void browserSetup(){
         System.setProperty("webdriver.chrome.driver", "Webdriver\\chromedriver.exe");
         ChromeOptions options = new ChromeOptions();
-        options.addArguments("--remote-allow-origins=*");
+        options.addArguments("--remote-allow-origins=*"); // Menghindari error forbidden 403
         chromeDriver = new ChromeDriver(options);
+        chromeDriver.manage().window().maximize();
         wait = new FluentWait(chromeDriver)
-                .withTimeout(Duration.ofSeconds(10))
+                .withTimeout(Duration.ofSeconds(30))
                 .pollingEvery(Duration.ofSeconds(5));
-    }
 
+    }
+// Method  akhir yang di panggil menggunakan @After dari io.cucumber.java.
+// Kata kunci : Hook selenium java
 //    @After
-//    public void tearDown(){
-//        chromeDriver.close();
-//        chromeDriver.quit();
-//    }
+    public void tearDown(){
+        chromeDriver.close();
+        chromeDriver.quit();
+    }
     @Given("User open url")
     public void openUrl() {
 
@@ -108,9 +116,9 @@ public class Login {
         chromeDriver.findElement(By.xpath("//a[@class='shopping_cart_link']")).click();
     }
 
-    @Then("Selected Product must be displayed")
+    @Then("System should be navigate user to cart page and selected Product must be displayed")
     public void selectedProductMustBeDisplayed() {
-        boolean productDisplay = chromeDriver.findElement(By.id("item_4_title_link")).isDisplayed();
+        boolean productDisplay = chromeDriver.findElement(By.className("cart_item")).isDisplayed();
         Assert.assertTrue(productDisplay);
     }
 
@@ -123,21 +131,33 @@ public class Login {
 
     @Then("System should be clearing the input field and removing the error message")
     public void systemShouldBeClearingTheInputFieldAndRemovingTheErrorMessage() {
-        boolean clearUsername = false; // inisialisasi bahwa field username tidak kosong saya tandai dengan false
-        boolean clearPassword = false; // inisialisasi bahwa field password tidak kosong saya tandai dengan false
-        String getValUsername = chromeDriver.findElement(By.id("user-name")).getAttribute("value");
-        String getValPassword = chromeDriver.findElement(By.id("password")).getAttribute("value");
-        boolean clearMessage  = chromeDriver.findElement(By.xpath("//div[@class='error-message-container']")).isDisplayed();
-        if (getValUsername == "" && getValPassword == ""){
-            clearUsername = true; // Jika value kosong maka ubah variable clearUsername ke true
-            clearPassword = true; // Jika value kosong maka ubah variable clearPassword ke true
+         String chkValUsnm;
+         String chkValPass;
+         boolean chkClrMsg;
+//      Menangkap error yang muncul dan mengeksekusi proses berikutnya
+        try {
+            chromeDriver.findElement(By.xpath("//div[@class='error-message-container error']")).isDisplayed();
+            chkClrMsg = true;
+        } catch (NoSuchElementException e){
+            chkClrMsg = false;
+        }
+        chkValUsnm = chromeDriver.findElement(By.id("user-name")).getAttribute("value");
+        chkValPass = chromeDriver.findElement(By.id("password")).getAttribute("value");
+        if (chkValUsnm != "" && chkValPass != ""){
+            System.out.println("Field Username and password must be Empty !");
         }else{
-            System.out.println("Fail!  System must be clearing all input field ");
+            System.out.println("As Expected!");
         }
 
-        Assert.assertTrue(clearUsername);
-        Assert.assertTrue(clearPassword);
-        Assert.assertTrue(clearMessage);
+        if (chkClrMsg == false){
+            System.out.println("Message As expected");
+        }else{
+            System.out.println("Message must be removed !");
+        }
+        Assert.assertTrue(chkValUsnm == "");
+        Assert.assertTrue(chkValPass == "");
+        Assert.assertFalse(chkClrMsg);
+
     }
 
     @Then("System should display error message {string}")
@@ -163,11 +183,12 @@ public class Login {
     }
 //Check cart badge is visible or not
     public boolean checkVisibilityBadge(){
+//        Check apakah shopping cart badge ada atau tidak digunakan untuk assertFalse
         try{
-            boolean badgeVisibility = chromeDriver.findElement(By.xpath("//span[@class='shopping_cart_badge']")).isDisplayed();
-            return true;
+            chromeDriver.findElement(By.xpath("//span[@class='shopping_cart_badge']")).isDisplayed();
+            return true; // Jika ada mengembalikan nilai true
         } catch (NoSuchElementException e){
-            return false;
+            return false; // Jika error atau tidak ada mengembalikan nilai false
         }
     }
     @Then("Add to cart button should be displayed and cart icon badge should be removed")
@@ -187,5 +208,68 @@ public class Login {
     @Then("System should remove the item")
     public void systemShouldRemoveTheItem() {
         Assert.assertTrue(chromeDriver.findElement(By.xpath("//div[@class='removed_cart_item']")).isEnabled());
+    }
+
+    @Then("System should be navigate user to cart page")
+    public void systemShouldBeNavigateUserToCartPage() {
+        String currentUrl = chromeDriver.getCurrentUrl();
+        Assert.assertEquals("https://www.saucedemo.com/cart.html", currentUrl);
+    }
+
+    @When("user click on Continue Shopping button")
+    public void userClickOnContinueShoppingButton() {
+        chromeDriver.findElement(By.xpath("//button[@id='continue-shopping']")).click();
+    }
+
+    @Then("System should be navigate user to inventory page")
+    public void systemShouldBeNavigateUserToInventoryPage() {
+        String currentUrl = chromeDriver.getCurrentUrl();
+        Assert.assertEquals("https://www.saucedemo.com/inventory.html", currentUrl);
+    }
+
+    @When("User add {int} product to cart")
+    public void userAddProductToCart(int amount) {
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("inventory_container")));
+//       Click add to cart button sebanyak amount
+        for (int i = 1; i <= amount; i++){
+            chromeDriver.findElement(By.xpath("//button[contains(@id,'add-to-cart')]")).click();
+        }
+    }
+
+    @Then("System should display a remove button according to the selected product and display a cart badge with the corresponding number")
+    public void systemShouldDisplayRemoveButtonAndDisplayACartBadgeWithTheNumber() {
+
+        boolean isRemoveDisplay = chromeDriver.findElement(By.xpath("//button[contains(@id,'remove')]")).isDisplayed();
+        int countRemoveBtn = chromeDriver.findElements(By.xpath("//button[contains(@id,'remove')]")).size();
+//       Check remove button sebanyak amountRemove
+        for (int i = 1; i<= countRemoveBtn; i++){
+            Assert.assertTrue(isRemoveDisplay);
+        }
+//        Menghitung jumlah button remove sebagai acuan untuk mencari badge dengan angka yang sesuai
+//        Jika banyak pakai findElements
+        chromeDriver.findElement(By.xpath("//span[contains(@class,'shopping_cart_badge') and text()="+countRemoveBtn+"]"));
+    }
+
+    @When("User remove {string} Product")
+    public void userRemoveProduct(String prodName) {
+//        Replace String yang mengandung spasi ke "-" dan ubah ke lower case semua dan simpan di xpath
+        String replaceName = prodName.replaceAll("\\s","-").toLowerCase();
+        chromeDriver.findElement(By.xpath("//button[contains(@id,'"+replaceName+"')]")).click();
+    }
+
+    @Then("System should remove {string} product and display a cart badge with the corresponding number")
+    public void systemShouldRemoveProductAndDisplayACartBadgeWithTheCorrespondingNumber(String prodName) {
+//    Cara yang berbeda untuk mengecek visibility element
+//    sebelumnya bisa dilihat di fungsi "checkVisibilityBadge"
+//      Replace String yang mengandung spasi ke "-" dan ubah ke lower case semua dan simpan di xpath
+        String replaceName = prodName.replaceAll("\\s","-").toLowerCase();
+        boolean check;
+        try{
+            chromeDriver.findElement(By.xpath("//button[contains(@id,'"+replaceName+"')]")).isDisplayed();
+        } catch (NoSuchElementException e){
+            check = false;// Jika error atau tidak ada mengembalikan nilai false
+            // Check pada assertFalse, jika false maka as expected
+            Assert.assertFalse(check);
+        }
     }
 }
