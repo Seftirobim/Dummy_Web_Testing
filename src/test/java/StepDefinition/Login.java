@@ -40,7 +40,7 @@ public class Login {
     }
 // Method  akhir yang di panggil menggunakan @After dari io.cucumber.java.
 // Kata kunci : Hook selenium java
-//    @After
+    @After
     public void tearDown(){
         chromeDriver.close();
         chromeDriver.quit();
