@@ -15,9 +15,13 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.FluentWait;
-
+import org.openqa.selenium.WebElement;
 
 import java.time.Duration;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 
 public class Login {
     WebDriver chromeDriver;
@@ -277,5 +281,107 @@ public class Login {
 //        Check badge apakah jumlahnya sesuai dengan remove button
         boolean chkCtBadge = chromeDriver.findElement(By.xpath("//span[contains(@class,'shopping_cart_badge') and text()="+countRemoveBtn+"]")).isDisplayed();
         Assert.assertTrue(chkCtBadge);
+    }
+
+    @When("User click checkout button")
+    public void userClickCheckOutButton() {
+        chromeDriver.findElement(By.xpath("//button[contains(@class,'checkout_button') and @name='checkout']")).click();
+    }
+
+    @Then("System should be navigate user to checkout page")
+    public void systemShouldBeNavigateUserToCheckoutPage() {
+        String currentUrl = chromeDriver.getCurrentUrl();
+        boolean checkUrl = currentUrl.contains("checkout-step-one.html");
+        Assert.assertTrue(checkUrl);
+    }
+
+    @When("User input firstname {string}, lastname {string} and postal code {int}")
+    public void userInputFirstnameLastnameAndPostalCode(String firstname, String lastname, int postalCode) {
+        chromeDriver.findElement(By.xpath("//input[@id='first-name']")).sendKeys(firstname);
+        chromeDriver.findElement(By.xpath("//input[@id='last-name']")).sendKeys(lastname);
+        chromeDriver.findElement(By.xpath("//input[@id='postal-code']")).sendKeys(String.valueOf(postalCode));
+
+    }
+
+    @And("Click continue button")
+    public void clickContinueButton() {
+        chromeDriver.findElement(By.xpath("//input[@id='continue']")).click();
+    }
+
+    @Then("System should navigate user to checkout step two page and display corresponding order data")
+    public void systemShouldNavigateUserToCheckoutStepTwoPageAndDisplayCorrespondingOrderData() {
+        String currentUrl = chromeDriver.getCurrentUrl();
+        boolean checkUrl = currentUrl.contains("checkout-step-two");
+
+        //Menemukan semua daftar elemen div yang mengandung class 'inventory_item_price' | kata kunci : how to foreach web element in java
+        List<WebElement> prices = chromeDriver.findElements(By.xpath("//div[contains(@class,'inventory_item_price')]"));
+
+        //Digunakan untuk menampung penjumlahan priceDouble
+        double sumPrice = 0;
+        //Tuangkan satu persatu ke variable price dan panggil di dalam loop
+        for (WebElement price : prices) {
+            // Menghilangkan symbol dollar
+            String cleanPrice = price.getText().replace("$", "");
+            //Mengkonversikan kedalam double / decimal
+            double priceDouble = Double.parseDouble(cleanPrice);
+            // setiap terjadi perulangan priceDouble maka akan di jumlahkan sampai perulangan berakhir
+            sumPrice += priceDouble;
+        }
+        // cari text dari element div yang mengandung ketiga class di bawah
+        String tax = chromeDriver.findElement(By.xpath("//div[@class='summary_tax_label']")).getText();
+        String subTotal = chromeDriver.findElement(By.xpath("//div[@class='summary_subtotal_label']")).getText();
+        String sumTotal = chromeDriver.findElement(By.xpath("//div[@class='summary_info_label summary_total_label']")).getText();
+        //Regex untuk mencocokan angka desimal dalam string
+        Pattern pattern = Pattern.compile("\\d+\\.\\d+");
+        // Cocokan polanya
+        Matcher taxMatcher = pattern.matcher(tax);
+        Matcher subTotalMatcher = pattern.matcher(subTotal);
+        Matcher sumTotalMatcher = pattern.matcher(sumTotal);
+
+        double taxDoub = 0,taxDecimal = 0, subTotalDoub = 0, subTotalDecimal = 0,sumTotalDoub = 0, sumTotalDecimal = 0;
+        // Kalo cocok maka konversikan ke double satu persatu
+        if (taxMatcher.find()) {
+            taxDoub = Double.parseDouble(taxMatcher.group());
+            taxDecimal = Math.round(taxDoub * 100.0) / 100.0;
+        }
+        if (subTotalMatcher.find()) {
+            subTotalDoub = Double.parseDouble(subTotalMatcher.group());
+            subTotalDecimal = Math.round(subTotalDoub * 100.0) / 100.0;
+        }
+        if (sumTotalMatcher.find()) {
+            sumTotalDoub = Double.parseDouble(sumTotalMatcher.group());
+            sumTotalDecimal = Math.round(sumTotalDoub * 100.0) /100.0;
+        }
+        // Untuk menjumlahkan total harga + tax
+        double totalPrice = sumPrice+taxDecimal;
+
+//        System.out.println("Sum Price : "+ String.valueOf(Math.round(sumPrice * 100.0) / 100.0));
+//        System.out.println("Sub Total in element : "+ String.valueOf(subTotalDecimal));
+//
+//        System.out.println("Tax in element : "+String.valueOf(taxDecimal));
+//
+//        System.out.println("Total price : "+String.valueOf(Math.round(totalPrice * 100.0) / 100.0));
+//        System.out.println("Sum total in element : "+String.valueOf(sumTotalDecimal));
+
+        Assert.assertTrue(Math.round(sumPrice * 100.0) / 100.0 == subTotalDecimal);
+        Assert.assertTrue(Math.round(totalPrice * 100.0) / 100.0 == sumTotalDecimal);
+        Assert.assertTrue(checkUrl);
+
+    }
+
+    @When("User click finish button")
+    public void userClickFinishButton() {
+        chromeDriver.findElement(By.xpath("//button[@name='finish']")).click();
+    }
+
+    @Then("System should navigate user to checkout complete page and display a success message")
+    public void systemShouldNavigateUserToCheckoutCompletePageAndDisplayAMessage() {
+        String currentUrl = chromeDriver.getCurrentUrl();
+        boolean checkUrl = currentUrl.contains("checkout-complete");
+        boolean tyMsg = chromeDriver.findElement(By.xpath("//h2[@class='complete-header']")).isDisplayed();
+
+        Assert.assertTrue(checkUrl);
+        Assert.assertTrue(tyMsg);
+
     }
 }

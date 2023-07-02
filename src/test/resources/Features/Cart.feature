@@ -90,3 +90,21 @@ Feature: Cart
      Then System should be navigate user to cart page and selected Product must be displayed
      When User remove "Bolt T-Shirt" Product
      Then System should remove "Bolt T-Shirt" product and display a cart badge with the corresponding number
+   # Positive
+   Scenario: User want to check out order
+     Given User open url
+     When User input valid username "standard_user" and valid password "secret_sauce"
+     And Click Login button
+     And User should success login
+     And The product image must be displayed and be appropriate
+     And User add 6 product to cart
+     And User click cart icon
+     Then System should be navigate user to cart page and selected Product must be displayed
+     When User click checkout button
+     Then System should be navigate user to checkout page
+     When User input firstname "example", lastname "example" and postal code 40222
+     And Click continue button
+     Then System should navigate user to checkout step two page and display corresponding order data
+     When User click finish button
+     Then System should navigate user to checkout complete page and display a success message
+
