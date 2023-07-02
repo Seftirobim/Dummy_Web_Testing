@@ -240,14 +240,15 @@ public class Login {
     public void systemShouldDisplayRemoveButtonAndDisplayACartBadgeWithTheNumber() {
 
         boolean isRemoveDisplay = chromeDriver.findElement(By.xpath("//button[contains(@id,'remove')]")).isDisplayed();
+//        Menghitung jumlah button remove sebagai acuan untuk mencari badge dengan angka yang sesuai
+//        Jika banyak pakai findElements
         int countRemoveBtn = chromeDriver.findElements(By.xpath("//button[contains(@id,'remove')]")).size();
-//       Check remove button sebanyak amountRemove
+        boolean chkCtBadge = chromeDriver.findElement(By.xpath("//span[contains(@class,'shopping_cart_badge') and text()="+countRemoveBtn+"]")).isDisplayed();
+//       Check remove button sebanyak Remove button
         for (int i = 1; i<= countRemoveBtn; i++){
             Assert.assertTrue(isRemoveDisplay);
         }
-//        Menghitung jumlah button remove sebagai acuan untuk mencari badge dengan angka yang sesuai
-//        Jika banyak pakai findElements
-        chromeDriver.findElement(By.xpath("//span[contains(@class,'shopping_cart_badge') and text()="+countRemoveBtn+"]"));
+        Assert.assertTrue(chkCtBadge);
     }
 
     @When("User remove {string} Product")
@@ -271,5 +272,10 @@ public class Login {
             // Check pada assertFalse, jika false maka as expected
             Assert.assertFalse(check);
         }
+//        Menghitung jumlah button remove sebagai acuan untuk mencari badge dengan angka yang sesuai
+        int countRemoveBtn = chromeDriver.findElements(By.xpath("//button[contains(@id,'remove')]")).size();
+//        Check badge apakah jumlahnya sesuai dengan remove button
+        boolean chkCtBadge = chromeDriver.findElement(By.xpath("//span[contains(@class,'shopping_cart_badge') and text()="+countRemoveBtn+"]")).isDisplayed();
+        Assert.assertTrue(chkCtBadge);
     }
 }
