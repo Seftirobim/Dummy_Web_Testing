@@ -6,7 +6,6 @@ import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import io.cucumber.java.mk_latn.No;
 import org.junit.Assert;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
@@ -16,8 +15,12 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.FluentWait;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.Select;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,7 +30,7 @@ public class Login {
     WebDriver chromeDriver;
     FluentWait wait;
     final String url = "https://www.saucedemo.com";
-
+    
 //    Method awal yang dipanggil menggunakan @Before dari io.cucumber.java.
 //    Kata kunci : Hook selenium java
     @Before
@@ -42,6 +45,11 @@ public class Login {
                 .pollingEvery(Duration.ofSeconds(5));
 
     }
+//    Method untuk panggil currentUrl
+    public String getCurrentUrl(){
+       return chromeDriver.getCurrentUrl();
+    }
+    
 // Method  akhir yang di panggil menggunakan @After dari io.cucumber.java.
 // Kata kunci : Hook selenium java
     @After
@@ -93,11 +101,14 @@ public class Login {
 
     @And("The product image must be displayed and be appropriate")
     public void theProductImageMustBeAppropriate() {
-
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("add-to-cart-sauce-labs-backpack")));
-
-        boolean display = chromeDriver.findElement(By.xpath("//img[@src='/static/media/sauce-backpack-1200x1500.0a0b85a3.jpg']")).isDisplayed();
-        Assert.assertTrue(display);
+        boolean displayExpectedImg;
+        try{
+            chromeDriver.findElement(By.xpath("//img[@src='/static/media/sauce-backpack-1200x1500.0a0b85a3.jpg']")).isDisplayed();
+            displayExpectedImg = true;
+        }catch (NoSuchElementException e){
+            displayExpectedImg = false;
+        }
+        Assert.assertTrue(displayExpectedImg);
 
     }
 
@@ -138,6 +149,7 @@ public class Login {
          String chkValUsnm;
          String chkValPass;
          boolean chkClrMsg;
+
 //      Menangkap error yang muncul dan mengeksekusi proses berikutnya
         try {
             chromeDriver.findElement(By.xpath("//div[@class='error-message-container error']")).isDisplayed();
@@ -166,7 +178,13 @@ public class Login {
 
     @Then("System should display error message {string}")
     public void systemShouldDisplayErrorMessage(String message) {
-        boolean xpathErrorMessage = chromeDriver.findElement(By.xpath("//div[@class='error-message-container error']/h3[1][text()='"+message+"']")).isDisplayed();
+        boolean xpathErrorMessage;
+        try{
+            chromeDriver.findElement(By.xpath("//div[@class='error-message-container error']/h3[1][text()='"+message+"']")).isDisplayed();
+            xpathErrorMessage = true;
+        }catch (NoSuchElementException e){
+            xpathErrorMessage = false;
+        }
         Assert.assertTrue(xpathErrorMessage);
     }
 
@@ -216,8 +234,8 @@ public class Login {
 
     @Then("System should be navigate user to cart page")
     public void systemShouldBeNavigateUserToCartPage() {
-        String currentUrl = chromeDriver.getCurrentUrl();
-        Assert.assertEquals("https://www.saucedemo.com/cart.html", currentUrl);
+
+        Assert.assertEquals("https://www.saucedemo.com/cart.html", getCurrentUrl());
     }
 
     @When("user click on Continue Shopping button")
@@ -227,8 +245,8 @@ public class Login {
 
     @Then("System should be navigate user to inventory page")
     public void systemShouldBeNavigateUserToInventoryPage() {
-        String currentUrl = chromeDriver.getCurrentUrl();
-        Assert.assertEquals("https://www.saucedemo.com/inventory.html", currentUrl);
+
+        Assert.assertEquals("https://www.saucedemo.com/inventory.html", getCurrentUrl());
     }
 
     @When("User add {int} product to cart")
@@ -290,28 +308,29 @@ public class Login {
 
     @Then("System should be navigate user to checkout page")
     public void systemShouldBeNavigateUserToCheckoutPage() {
-        String currentUrl = chromeDriver.getCurrentUrl();
-        boolean checkUrl = currentUrl.contains("checkout-step-one.html");
+
+        boolean checkUrl = getCurrentUrl().contains("checkout-step-one.html");
         Assert.assertTrue(checkUrl);
     }
 
-    @When("User input firstname {string}, lastname {string} and postal code {int}")
-    public void userInputFirstnameLastnameAndPostalCode(String firstname, String lastname, int postalCode) {
+    @When("User input firstname {string}, lastname {string} and postal code {string}")
+    public void userInputFirstnameLastnameAndPostalCode(String firstname, String lastname, String postalCode) {
         chromeDriver.findElement(By.xpath("//input[@id='first-name']")).sendKeys(firstname);
         chromeDriver.findElement(By.xpath("//input[@id='last-name']")).sendKeys(lastname);
-        chromeDriver.findElement(By.xpath("//input[@id='postal-code']")).sendKeys(String.valueOf(postalCode));
+        chromeDriver.findElement(By.xpath("//input[@id='postal-code']")).sendKeys(postalCode);
 
     }
 
-    @And("Click continue button")
+
+    @And("User Click continue button")
     public void clickContinueButton() {
         chromeDriver.findElement(By.xpath("//input[@id='continue']")).click();
     }
 
     @Then("System should navigate user to checkout step two page and display corresponding order data")
     public void systemShouldNavigateUserToCheckoutStepTwoPageAndDisplayCorrespondingOrderData() {
-        String currentUrl = chromeDriver.getCurrentUrl();
-        boolean checkUrl = currentUrl.contains("checkout-step-two");
+
+        boolean checkUrl = getCurrentUrl().contains("checkout-step-two");
 
         //Menemukan semua daftar elemen div yang mengandung class 'inventory_item_price' | kata kunci : how to foreach web element in java
         List<WebElement> prices = chromeDriver.findElements(By.xpath("//div[contains(@class,'inventory_item_price')]"));
@@ -338,7 +357,7 @@ public class Login {
         Matcher subTotalMatcher = pattern.matcher(subTotal);
         Matcher sumTotalMatcher = pattern.matcher(sumTotal);
 
-        double taxDoub = 0,taxDecimal = 0, subTotalDoub = 0, subTotalDecimal = 0,sumTotalDoub = 0, sumTotalDecimal = 0;
+        double taxDoub,taxDecimal = 0, subTotalDoub, subTotalDecimal = 0,sumTotalDoub, sumTotalDecimal = 0;
         // Kalo cocok maka konversikan ke double satu persatu
         if (taxMatcher.find()) {
             taxDoub = Double.parseDouble(taxMatcher.group());
@@ -376,12 +395,92 @@ public class Login {
 
     @Then("System should navigate user to checkout complete page and display a success message")
     public void systemShouldNavigateUserToCheckoutCompletePageAndDisplayAMessage() {
-        String currentUrl = chromeDriver.getCurrentUrl();
-        boolean checkUrl = currentUrl.contains("checkout-complete");
+
+        boolean checkUrl = getCurrentUrl().contains("checkout-complete");
         boolean tyMsg = chromeDriver.findElement(By.xpath("//h2[@class='complete-header']")).isDisplayed();
 
         Assert.assertTrue(checkUrl);
         Assert.assertTrue(tyMsg);
 
     }
+
+    @Then("System should display an error message {string}")
+    public void systemShouldDisplayAnErrorMessage(String msg) {
+        WebElement msgElmnt;
+        String getMsg;
+        boolean isElmntDisplay;
+        try{
+            chromeDriver.findElement(By.xpath("//h3[@data-test='error']")).isDisplayed();
+            isElmntDisplay = true;
+            msgElmnt = chromeDriver.findElement(By.xpath("//h3[@data-test='error']"));
+            getMsg = msgElmnt.getText();
+        }catch (NoSuchElementException e){
+            isElmntDisplay = false;
+            getMsg = null;
+        }
+        Assert.assertTrue(isElmntDisplay);
+        Assert.assertEquals(msg,getMsg);
+
+    }
+
+
+    @When("User select sort product by {string}")
+    public void userSelectSortProductBy(String txt) {
+        //Untuk memilih element select
+        Select objSelect = new Select(chromeDriver.findElement(By.className("product_sort_container")));
+        // Select sesuai text
+        objSelect.selectByVisibleText(txt);
+    }
+
+    @Then("System should display a sort product by {string}")
+    public void systemShouldDisplayASortProductByUserSelected(String txt) {
+        Select select = new Select(chromeDriver.findElement(By.className("product_sort_container")));
+        // Mendapatkan value select option
+        WebElement getSelectedText = select.getFirstSelectedOption();
+        String selectedText = getSelectedText.getText();
+
+        // Mendaptkan list pada perulangan produk, kemudian ambil hanya class untuk nama produk dan harga
+        List<WebElement> productNames = chromeDriver.findElements(By.xpath("//div[@class='inventory_item_name']"));
+        List<WebElement> itemPrices = chromeDriver.findElements(By.xpath("//div[@class='inventory_item_price']"));
+
+        // Tempat untuk menampung nama dan harga yang sudah di looping
+        List<String> prodNameElement = new ArrayList<>();
+        List<String> prodNameSort = new ArrayList<>();
+        for (WebElement productName : productNames) {
+            // Masukan ke variable di atas
+            prodNameElement.add(productName.getText());
+            prodNameSort.add(productName.getText());
+        }
+
+        List<String> itemPriceElement = new ArrayList<>();
+        List<String> itemPriceSort = new ArrayList<>();
+        for (WebElement itemPrice : itemPrices) {
+            itemPriceElement.add(itemPrice.getText());
+            itemPriceSort.add(itemPrice.getText());
+        }
+        // Untuk menvalidasi apakah sort produk sudah sesuai, dengan membandingkan value kedua variable
+        // pertama value dri variable yang didapatkan dri looping element, satu lagi value yang di dapatkan dari hasil logic sort pada code
+        if (selectedText == "Name (Z to A)" || selectedText == "Price (high to low)" ){
+            Collections.sort(prodNameSort, Collections.reverseOrder());
+            Collections.sort(itemPriceSort, Collections.reverseOrder());
+//            Collections.sort(prodNameSort);
+//            Collections.sort(itemPriceSort);
+        }
+
+
+//        System.out.println(prodNameElement);
+//        System.out.println(prodNameSort);
+        Assert.assertEquals(prodNameElement,prodNameSort);
+//        System.out.println(" ");
+//        System.out.println(itemPriceElement);
+//        System.out.println(itemPriceSort);
+        Assert.assertEquals(itemPriceElement,itemPriceSort);
+//        System.out.println(" ");
+//        System.out.println(selectedText);
+//        System.out.println(txt);
+         Assert.assertEquals(txt,selectedText);
+
+
+    }
+
 }

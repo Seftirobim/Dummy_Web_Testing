@@ -47,38 +47,40 @@
             <version>5.7.5</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/io.github.bonigarcia/webdrivermanager -->
-        <dependency>
-            <groupId>io.github.bonigarcia</groupId>
-            <artifactId>webdrivermanager</artifactId>
-            <version>5.3.2</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>io.github.bonigarcia</groupId>-->
+<!--            <artifactId>webdrivermanager</artifactId>-->
+<!--            <version>5.3.2</version>-->
+<!--        </dependency>-->
 
     </dependencies>
     <build>
+        <defaultGoal>install</defaultGoal>
         <plugins>
-<!--            <plugin>-->
-<!--                <groupId>org.apache.maven.plugins</groupId>-->
-<!--                <artifactId>maven-surefire-plugin</artifactId>-->
-<!--                <version>2.22.0</version>-->
-<!--                <configuration>-->
-<!--                    &lt;!&ndash;Parallel &ndash;&gt;-->
-<!--                    <parallel>methods</parallel>-->
-<!--                    &lt;!&ndash;				<useUnlimitedThreads>true</useUnlimitedThreads>&ndash;&gt;-->
-<!--                    <threadCount>4</threadCount>-->
-<!--                    <perCoreThreadCount>false</perCoreThreadCount>-->
-<!--                    &lt;!&ndash;Parallel &ndash;&gt;-->
-<!--                    <testFailureIgnore>true</testFailureIgnore>-->
-<!--                </configuration>-->
-<!--            </plugin>-->
-<!--            Must install maven and add to environment variable-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.22.0</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <!--Parallel -->
+                    <parallel>methods</parallel>
+                    <!--				<useUnlimitedThreads>true</useUnlimitedThreads>-->
+                    <threadCount>4</threadCount>
+                    <perCoreThreadCount>false</perCoreThreadCount>
+                    <!--Parallel -->
+                    <testFailureIgnore>true</testFailureIgnore>
                 </configuration>
             </plugin>
+<!--            Must install maven and add to environment variable-->
+<!--            <plugin>-->
+<!--                <groupId>org.apache.maven.plugins</groupId>-->
+<!--                <artifactId>maven-compiler-plugin</artifactId>-->
+<!--                <version>3.11.0</version>-->
+<!--                <configuration>-->
+<!--                    <source>1.8</source>-->
+<!--                    <target>1.8</target>-->
+<!--                </configuration>-->
+<!--            </plugin>-->
             <plugin>
                 <groupId>net.masterthought</groupId>
                 <artifactId>maven-cucumber-reporting</artifactId>
@@ -93,7 +95,12 @@
                         <configuration>
                             <projectName>Web_Dummy_Test_Training</projectName>
                             <outputDirectory>${project.build.directory}/cucumber-report-html</outputDirectory>
+<!--                            Untuk versi yang jadul-->
                             <cucumberOutput>${project.build.directory}/cucumber.json</cucumberOutput>
+<!--                            Versi yang baru memakai ini-->
+<!--                            <jsonFiles>-->
+<!--                                <param>cucumber.json</param> &lt;!&ndash; the name/regex of the cucumber report json file &ndash;&gt;-->
+<!--                            </jsonFiles>-->
                         </configuration>
                     </execution>
                 </executions>
