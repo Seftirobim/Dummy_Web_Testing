@@ -49,7 +49,7 @@ Feature: Cart
      Then System should be navigate user to cart page and selected Product must be displayed
 
    # Positive
-   Scenario: User want to go back to the inventory page after clicking the cart icon.
+   Scenario: User want to go back to the inventory page after clicking the continue shopping button.
      Given User open url
      When User input valid username "standard_user" and valid password "secret_sauce"
      And Click Login button
